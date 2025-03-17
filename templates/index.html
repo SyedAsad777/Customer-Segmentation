@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Segmentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center text-primary">Customer Segmentation Analysis</h2>
+
+        <!-- File Upload Section -->
+        <div class="card shadow p-4 mt-4">
+            <h5 class="text-center">Upload Online Retail Dataset</h5>
+            <form id="uploadForm">
+                <input type="file" id="fileInput" class="form-control mt-3" required>
+                <button type="submit" class="btn btn-success mt-3 w-100">Upload & Analyze</button>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="mt-5 d-none">
+            <h4 class="text-center text-info">Analysis Results</h4>
+
+            <!-- Customer Segmentation -->
+            <div class="card shadow p-3 mt-3">
+                <h5>Customer Segmentation (%)</h5>
+                <ul id="clusterSummary" class="list-group"></ul>
+            </div>
+
+            <!-- Top 5 Products -->
+            <div class="card shadow p-3 mt-3">
+                <h5>Top 5 Best-Selling Products</h5>
+                <ul id="topProducts" class="list-group"></ul>
+            </div>
+
+            <!-- Bottom 5 Products -->
+            <div class="card shadow p-3 mt-3">
+                <h5>Bottom 5 Least-Selling Products</h5>
+                <ul id="bottomProducts" class="list-group"></ul>
+            </div>
+
+            <!-- Business Recommendations -->
+            <div class="card shadow p-3 mt-3">
+                <h5>Business Recommendations</h5>
+                <ul id="businessRecommendations" class="list-group"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById("fileInput").files[0];
+            if (!fileInput) {
+                alert("Please select a file!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", fileInput);
+
+            try {
+                let response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+
+                let data = await response.json();
+                if (data.status === "success") {
+                    document.getElementById("results").classList.remove("d-none");
+
+                    // Customer Segmentation
+                    document.getElementById("clusterSummary").innerHTML = "";
+                    for (let [key, value] of Object.entries(data.cluster_summary)) {
+                        document.getElementById("clusterSummary").innerHTML += `<li class="list-group-item">${key}: <strong>${value}%</strong></li>`;
+                    }
+
+                    // Top 5 Products
+                    document.getElementById("topProducts").innerHTML = "";
+                    for (let [key, value] of Object.entries(data.top_5_products)) {
+                        document.getElementById("topProducts").innerHTML += `<li class="list-group-item">${key}: <strong>${value} units</strong></li>`;
+                    }
+
+                    // Bottom 5 Products
+                    document.getElementById("bottomProducts").innerHTML = "";
+                    for (let [key, value] of Object.entries(data.bottom_5_products)) {
+                        document.getElementById("bottomProducts").innerHTML += `<li class="list-group-item">${key}: <strong>${value} units</strong></li>`;
+                    }
+
+                    // Business Recommendations
+                    document.getElementById("businessRecommendations").innerHTML = "";
+                    data.business_recommendations.forEach(rec => {
+                        document.getElementById("businessRecommendations").innerHTML += `<li class="list-group-item">${rec}</li>`;
+                    });
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to upload file. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>
